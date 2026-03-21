@@ -1,0 +1,208 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (matches auth.uid)
+    // Fields:
+    //   - uid: string (required, immutable) - User ID
+    //   - displayName: string (required) - Display name
+    //   - photoURL: string (optional) - Profile photo URL
+    //   - state: string (required) - US state abbreviation
+    //   - totalClicks: number (required) - Total clicks generated
+    //   - clicksPerSecond: number (required) - Passive clicks per second
+    //   - clickPower: number (required) - Clicks per manual click
+    //   - lastActive: timestamp (required) - Last active time
+    //   - createdAt: timestamp (required, immutable) - Account creation time
+    //
+    // Collection: states
+    // Document ID: {stateId} (e.g., 'CA', 'TX')
+    // Fields:
+    //   - name: string (required, immutable) - State name
+    //   - totalClicks: number (required) - Total clicks for the state
+    //
+    // Collection: global
+    // Document ID: 'stats'
+    // Fields:
+    //   - totalClicks: number (required) - Global total clicks
+    //   - currentEvent: string (optional) - Current active event
+    //
+    // Collection: activity
+    // Document ID: auto-generated
+    // Fields:
+    //   - userId: string (required, immutable) - User ID
+    //   - displayName: string (required, immutable) - Display name
+    //   - state: string (required, immutable) - State abbreviation
+    //   - message: string (required, immutable) - Activity message
+    //   - timestamp: timestamp (required, immutable) - Time of activity
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function uidUnchanged() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('uid' in request.resource.data) || request.resource.data.uid == resource.data.uid;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function validStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !(field in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser() {
+      return hasOnlyAllowedFields(['uid', 'displayName', 'photoURL', 'state', 'totalClicks', 'balance', 'clicksPerSecond', 'clickPower', 'lastActive', 'createdAt', 'achievements', 'participatedEvents', 'eventsParticipated']) &&
+             validStringLength('uid', 1, 128) &&
+             validStringLength('displayName', 1, 50) &&
+             isValidOptionalString('photoURL', 0, 500) &&
+             validStringLength('state', 2, 50) &&
+             request.resource.data.totalClicks is number && request.resource.data.totalClicks >= 0 &&
+             request.resource.data.balance is number && request.resource.data.balance >= 0 &&
+             request.resource.data.clicksPerSecond is number && request.resource.data.clicksPerSecond >= 0 &&
+             request.resource.data.clickPower is number && request.resource.data.clickPower >= 1 &&
+             (!('lastActive' in request.resource.data) || request.resource.data.lastActive is timestamp) &&
+             (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp) &&
+             (!('achievements' in request.resource.data) || request.resource.data.achievements is list) &&
+             (!('participatedEvents' in request.resource.data) || request.resource.data.participatedEvents is list) &&
+             (!('eventsParticipated' in request.resource.data) || request.resource.data.eventsParticipated is number);
+    }
+
+    function isValidStateUpdate() {
+      // Allow only totalClicks and name to be updated
+      // ANTI-CHEAT: Limit max increment per request to 100,000 to prevent massive botting
+      let incrementAmount = request.resource.data.totalClicks - (('totalClicks' in resource.data) ? resource.data.totalClicks : 0);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClicks', 'name']) &&
+             request.resource.data.totalClicks is number &&
+             incrementAmount >= 0 &&
+             incrementAmount <= 100000 &&
+             (!('name' in request.resource.data.diff(resource.data).affectedKeys()) || (!('name' in resource.data) || request.resource.data.name == resource.data.name));
+    }
+
+    function isValidGlobalStatsUpdate() {
+      // Allow only totalClicks and currentEvent to be updated
+      // ANTI-CHEAT: Limit max increment per request to 100,000
+      let incrementAmount = ('totalClicks' in request.resource.data ? request.resource.data.totalClicks : 0) - (('totalClicks' in resource.data) ? resource.data.totalClicks : 0);
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClicks', 'currentEvent']) &&
+             (!('totalClicks' in request.resource.data) || (request.resource.data.totalClicks is number && incrementAmount >= 0 && incrementAmount <= 100000)) &&
+             (!('currentEvent' in request.resource.data) || request.resource.data.currentEvent == null || request.resource.data.currentEvent is map);
+    }
+
+    function isValidActivity() {
+      return hasOnlyAllowedFields(['userId', 'displayName', 'state', 'message', 'timestamp']) &&
+             validStringLength('userId', 1, 128) &&
+             validStringLength('displayName', 1, 50) &&
+             validStringLength('state', 2, 50) &&
+             validStringLength('message', 1, 200) &&
+             request.resource.data.timestamp is timestamp &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    function isValidUserUpdate() {
+      let clicksIncrement = request.resource.data.totalClicks - resource.data.totalClicks;
+      // ANTI-CHEAT: Prevent massive click injections
+      return isValidUser() &&
+             uidNotModified() &&
+             areImmutableFieldsUnchanged(['createdAt']) &&
+             clicksIncrement >= 0 &&
+             clicksIncrement <= 100000;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Anyone can read public profiles for leaderboards
+      allow read: if true;
+      allow create: if isOwner(userId) &&
+                       isValidUser() &&
+                       uidUnchanged() &&
+                       request.resource.data.totalClicks == 0 &&
+                       request.resource.data.balance == 0 &&
+                       request.resource.data.clicksPerSecond == 0 &&
+                       request.resource.data.clickPower == 1;
+      allow update: if isOwner(userId) && isValidUserUpdate();
+      allow delete: if false;
+    }
+
+    match /states/{stateId} {
+      // Anyone can read state stats
+      allow read: if true;
+      // Allow creation if it doesn't exist, or update
+      allow create: if isAuthenticated() &&
+                       request.resource.data.keys().hasOnly(['name', 'totalClicks']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.totalClicks is number &&
+                       request.resource.data.totalClicks >= 0;
+      allow update: if isAuthenticated() && isValidStateUpdate();
+      allow delete: if false;
+    }
+
+    match /global/stats {
+      // Anyone can read global stats
+      allow read: if true;
+      // Allow creation if it doesn't exist
+      allow create: if isAuthenticated() &&
+                       request.resource.data.keys().hasOnly(['totalClicks', 'currentEvent']) &&
+                       (!('totalClicks' in request.resource.data) || (request.resource.data.totalClicks is number && request.resource.data.totalClicks >= 0)) &&
+                       (!('currentEvent' in request.resource.data) || request.resource.data.currentEvent == null || request.resource.data.currentEvent is map);
+      allow update: if isAuthenticated() && isValidGlobalStatsUpdate();
+      allow delete: if false;
+    }
+
+    match /activity/{activityId} {
+      // Anyone can read activity feed
+      allow read: if true;
+      // Users can create activity events
+      allow create: if isAuthenticated() && isValidActivity();
+      // Activity events are immutable
+      allow update, delete: if false;
+    }
+  }
+}
