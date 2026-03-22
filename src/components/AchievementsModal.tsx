@@ -21,7 +21,7 @@ export function AchievementsModal({ isOpen, onClose, earnedAchievements }: Achie
           exit={{ opacity: 0, scale: 0.95 }}
           className="bg-white border-4 border-blue-900 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl"
         >
-          <div className="flex items-center justify-between p-6 border-b-4 border-blue-950 bg-blue-800">
+          <div className="flex items-center justify-between p-4 sm:p-6 border-b-4 border-blue-950 bg-blue-800">
             <h2 className="text-2xl font-display text-white tracking-wide">Achievements</h2>
             <button
               onClick={onClose}
@@ -31,7 +31,7 @@ export function AchievementsModal({ isOpen, onClose, earnedAchievements }: Achie
             </button>
           </div>
 
-          <div className="p-6 max-h-[60vh] overflow-y-auto bg-slate-100">
+          <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto bg-slate-100">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {ACHIEVEMENTS.map((achievement) => {
                 const isEarned = earnedAchievements.includes(achievement.id);

@@ -153,81 +153,81 @@ export function GameUI() {
   return (
     <div className="min-h-screen bg-blue-600 text-white font-sans flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="h-16 border-b-4 border-red-800 bg-red-600 flex items-center justify-between px-6 shrink-0 z-10 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border-4 border-blue-900 shadow-sm">
-            <Trophy className="w-5 h-5 text-red-600" />
+      <header className="h-14 sm:h-16 border-b-4 border-red-800 bg-red-600 flex items-center justify-between px-3 sm:px-6 shrink-0 z-10 shadow-md">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white flex items-center justify-center border-2 sm:border-4 border-blue-900 shadow-sm">
+            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
           </div>
-          <h1 className="font-display text-2xl tracking-wide text-white drop-shadow-md">Click America</h1>
+          <h1 className="font-display text-lg sm:text-2xl tracking-wide text-white drop-shadow-md">Click America</h1>
         </div>
         
-        <div className="flex items-center gap-6">
-          <div className="text-right">
+        <div className="flex items-center gap-2 sm:gap-6">
+          <div className="text-right hidden sm:block">
             <div className="text-xs text-red-200 font-bold uppercase tracking-wider">Global Total</div>
-            <div className="font-display text-2xl text-white drop-shadow-md">{globalClicks.toLocaleString()}</div>
+            <div className="font-display text-xl sm:text-2xl text-white drop-shadow-md">{globalClicks.toLocaleString()}</div>
           </div>
-          <div className="h-8 w-1 bg-red-800 rounded-full"></div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="h-8 w-1 bg-red-800 rounded-full hidden sm:block"></div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="text-right hidden sm:block">
               <div className="text-sm font-bold">{profile.displayName}</div>
               <div className="text-xs text-red-200 font-bold">{STATE_NAMES[profile.state]}</div>
             </div>
             {profile.photoURL ? (
-              <img src={profile.photoURL} alt="Profile" className="w-10 h-10 rounded-full border-4 border-white shadow-sm" referrerPolicy="no-referrer" />
+              <img src={profile.photoURL} alt="Profile" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 sm:border-4 border-white shadow-sm" referrerPolicy="no-referrer" />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-blue-800 border-4 border-white shadow-sm" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-800 border-2 sm:border-4 border-white shadow-sm" />
             )}
-            <button onClick={() => setShowAchievements(true)} className="p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700 ml-2 relative">
-              <Medal className="w-5 h-5" />
+            <button onClick={() => setShowAchievements(true)} className="p-1.5 sm:p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700 sm:ml-2 relative">
+              <Medal className="w-4 h-4 sm:w-5 sm:h-5" />
               {(profile.achievements?.length || 0) > 0 && (
-                <span className="absolute top-1 right-1 w-3 h-3 bg-yellow-400 border-2 border-red-700 rounded-full"></span>
+                <span className="absolute top-0 right-0 sm:top-1 sm:right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-yellow-400 border-2 border-red-700 rounded-full"></span>
               )}
             </button>
-            <button onClick={toggleMute} className="p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700">
-              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            <button onClick={toggleMute} className="p-1.5 sm:p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700">
+              {isMuted ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
             </button>
-            <button onClick={logOut} className="p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700">
-              <LogOut className="w-5 h-5" />
+            <button onClick={logOut} className="p-1.5 sm:p-2 text-red-100 hover:text-white transition-colors rounded-lg hover:bg-red-700">
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col lg:flex-row overflow-hidden p-4 gap-4">
+      <main className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-2 sm:p-4 gap-4">
         {/* Left Panel: Leaderboards */}
-        <aside className="w-full lg:w-80 flex flex-col overflow-hidden shrink-0">
+        <aside className="w-full lg:w-80 flex flex-col overflow-hidden shrink-0 min-h-[400px] lg:min-h-0 order-3 lg:order-1">
           <Leaderboard userState={profile.state} />
         </aside>
 
         {/* Center: Game Area */}
-        <section className="flex-1 flex flex-col relative bg-blue-500 border-4 border-blue-800 rounded-2xl shadow-inner overflow-hidden">
+        <section className="flex-1 flex flex-col relative bg-blue-500 border-4 border-blue-800 rounded-2xl shadow-inner overflow-hidden min-h-[650px] lg:min-h-0 order-1 lg:order-2">
           {isEventActive && (
-            <div className="bg-red-600 border-b-4 border-red-800 text-white px-6 py-3 flex justify-between items-center shrink-0 z-20">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg border-2 border-red-800">
-                  <Swords className="w-6 h-6 text-red-600" />
+            <div className="bg-red-600 border-b-4 border-red-800 text-white px-4 sm:px-6 py-2 sm:py-3 flex flex-col sm:flex-row justify-between items-center shrink-0 z-20 gap-2 sm:gap-0">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-white rounded-lg border-2 border-red-800">
+                  <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                 </div>
-                <div>
-                  <div className="text-xs text-red-200 font-bold uppercase tracking-wider">Active State Rivalry</div>
-                  <div className="font-display text-lg tracking-wide">{STATE_NAMES[currentEvent.stateA]} vs {STATE_NAMES[currentEvent.stateB]}</div>
+                <div className="text-center sm:text-left">
+                  <div className="text-[10px] sm:text-xs text-red-200 font-bold uppercase tracking-wider">Active State Rivalry</div>
+                  <div className="font-display text-base sm:text-lg tracking-wide">{STATE_NAMES[currentEvent.stateA]} vs {STATE_NAMES[currentEvent.stateB]}</div>
                 </div>
               </div>
               {isParticipating ? (
-                <div className="bg-yellow-400 text-red-900 border-2 border-yellow-600 px-4 py-1 rounded-full text-sm font-black shadow-md uppercase tracking-wider">
+                <div className="bg-yellow-400 text-red-900 border-2 border-yellow-600 px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-black shadow-md uppercase tracking-wider">
                   {multiplier}x Clicks Active!
                 </div>
               ) : (
-                <div className="text-red-200 text-sm font-bold uppercase tracking-wider">Spectating</div>
+                <div className="text-red-200 text-xs sm:text-sm font-bold uppercase tracking-wider">Spectating</div>
               )}
             </div>
           )}
 
           <div className="flex-1 overflow-y-auto relative z-10 flex flex-col">
-            <div className="flex flex-col items-center justify-center p-8 min-h-[500px]">
-              <div className="text-center mb-12">
-                <h2 className="text-6xl font-display tracking-wide mb-2 drop-shadow-lg">{STATE_NAMES[profile.state]}</h2>
-                <p className="text-blue-200 text-xl font-bold uppercase tracking-wider">State Total: <span className="font-display text-white drop-shadow-md">{stateClicks.toLocaleString()}</span></p>
+            <div className="flex flex-col items-center justify-center p-4 sm:p-8 min-h-[400px] sm:min-h-[500px]">
+              <div className="text-center mb-8 sm:mb-12">
+                <h2 className="text-4xl sm:text-6xl font-display tracking-wide mb-1 sm:mb-2 drop-shadow-lg leading-tight">{STATE_NAMES[profile.state]}</h2>
+                <p className="text-blue-200 text-lg sm:text-xl font-bold uppercase tracking-wider">State Total: <span className="font-display text-white drop-shadow-md">{stateClicks.toLocaleString()}</span></p>
               </div>
 
               <motion.button
@@ -236,51 +236,51 @@ export function GameUI() {
                 onClick={handleClick}
                 className="relative group outline-none"
               >
-                <div className="w-64 h-64 rounded-full bg-red-500 border-8 border-white shadow-[0_15px_0_#991b1b] flex items-center justify-center relative overflow-hidden">
+                <div className="w-48 h-48 sm:w-64 sm:h-64 rounded-full bg-red-500 border-4 sm:border-8 border-white shadow-[0_10px_0_#991b1b] sm:shadow-[0_15px_0_#991b1b] flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent"></div>
                   <div className="text-center relative z-10">
-                    <div className="text-6xl font-display text-white drop-shadow-lg select-none pointer-events-none">
+                    <div className="text-4xl sm:text-6xl font-display text-white drop-shadow-lg select-none pointer-events-none">
                       CLICK
                     </div>
                   </div>
                 </div>
               </motion.button>
 
-              <div className="mt-16 flex gap-8 justify-center text-center">
-                <div className="bg-white/10 p-4 rounded-xl border-4 border-white/20 min-w-[200px]">
-                  <div className="text-sm text-blue-200 font-bold uppercase tracking-widest mb-1">Available Clicks</div>
+              <div className="mt-12 sm:mt-16 flex flex-col sm:flex-row gap-4 sm:gap-8 justify-center text-center w-full max-w-md">
+                <div className="bg-white/10 p-3 sm:p-4 rounded-xl border-4 border-white/20 flex-1">
+                  <div className="text-xs sm:text-sm text-blue-200 font-bold uppercase tracking-widest mb-1">Available Clicks</div>
                   <motion.div
                     key={clickBump}
                     initial={{ scale: 1.1, color: '#ffffff' }}
                     animate={{ scale: 1, color: '#facc15' }}
                     transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-                    className="text-5xl font-display text-yellow-400 drop-shadow-md"
+                    className="text-3xl sm:text-5xl font-display text-yellow-400 drop-shadow-md"
                   >
                     {Math.floor(localBalance).toLocaleString()}
                   </motion.div>
                 </div>
-                <div className="bg-white/10 p-4 rounded-xl border-4 border-white/20 min-w-[200px]">
-                  <div className="text-sm text-blue-200 font-bold uppercase tracking-widest mb-1">Lifetime Clicks</div>
-                  <div className="text-5xl font-display text-white drop-shadow-md">
+                <div className="bg-white/10 p-3 sm:p-4 rounded-xl border-4 border-white/20 flex-1">
+                  <div className="text-xs sm:text-sm text-blue-200 font-bold uppercase tracking-widest mb-1">Lifetime Clicks</div>
+                  <div className="text-3xl sm:text-5xl font-display text-white drop-shadow-md">
                     {Math.floor(localClicks).toLocaleString()}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="px-8 pb-12 mt-auto">
+            <div className="px-4 sm:px-8 pb-8 sm:pb-12 mt-auto hidden sm:block">
               <USMap />
             </div>
           </div>
 
           {/* Bottom: Activity Feed */}
-          <div className="h-48 shrink-0">
+          <div className="h-40 sm:h-48 shrink-0">
             <ActivityFeed />
           </div>
         </section>
 
         {/* Right Panel: Upgrades */}
-        <aside className="w-full lg:w-80 flex flex-col overflow-hidden shrink-0">
+        <aside className="w-full lg:w-80 flex flex-col overflow-hidden shrink-0 min-h-[500px] lg:min-h-0 order-2 lg:order-3">
           <Upgrades profile={profile} localBalance={localBalance} setLocalBalance={setLocalBalance} />
         </aside>
       </main>
@@ -298,7 +298,7 @@ export function GameUI() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-8 right-8 bg-white border-4 border-blue-900 shadow-xl rounded-2xl p-4 flex items-center gap-4 z-50"
+            className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 bg-white border-4 border-blue-900 shadow-xl rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 z-50 max-w-[calc(100vw-2rem)] sm:max-w-md"
           >
             <div className="p-3 bg-yellow-400 border-2 border-yellow-600 text-red-700 rounded-xl">
               <recentAchievement.icon className="w-8 h-8" />

@@ -29,7 +29,7 @@ export function StateSelector() {
       >
         <div className="absolute top-0 left-0 w-full h-4 bg-red-600"></div>
         <div className="text-center mb-8 mt-4">
-          <h1 className="text-4xl font-display text-blue-900 mb-2 tracking-wide drop-shadow-sm">Choose Your State</h1>
+          <h1 className="text-3xl sm:text-4xl font-display text-blue-900 mb-2 tracking-wide drop-shadow-sm">Choose Your State</h1>
           <p className="text-slate-600 font-bold">Select your state to start generating clicks for the national leaderboard.</p>
         </div>
 

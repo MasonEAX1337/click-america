@@ -32,10 +32,10 @@ export function Leaderboard({ userState }: { userState: string }) {
 
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl overflow-hidden border-4 border-blue-900 shadow-xl">
-      <div className="bg-blue-800 p-4 border-b-4 border-blue-950">
+      <div className="bg-blue-800 p-3 sm:p-4 border-b-4 border-blue-950">
         <h3 className="text-xl font-display text-white text-center tracking-wide">Top States</h3>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-100">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-slate-100">
         {states.map((state, index) => (
           <motion.div
             key={state.name}

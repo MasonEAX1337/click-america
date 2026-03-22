@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { doc, getDoc, setDoc, serverTimestamp, onSnapshot, increment, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, increment, writeBatch } from 'firebase/firestore';
 
 interface UserProfile {
   uid: string;
@@ -14,7 +14,7 @@ interface UserProfile {
   clickPower: number;
   achievements?: string[];
   participatedEvents?: string[];
-  lastActive?: any; // Firestore Timestamp
+  lastActive?: any; // Firestore Timestamp or number (Date.now())
 }
 
 interface AuthContextType {
@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [offlineEarnings, setOfflineEarnings] = useState<number | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const hasCalculatedOfflineProgress = React.useRef(false);
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Calculate offline progress ONCE per session
             if (!hasCalculatedOfflineProgress.current && data.lastActive && data.clicksPerSecond > 0) {
               hasCalculatedOfflineProgress.current = true;
-              const lastActiveMs = data.lastActive.toMillis ? data.lastActive.toMillis() : Date.now();
+              const lastActiveMs = typeof data.lastActive === 'number' ? data.lastActive : (data.lastActive.toMillis ? data.lastActive.toMillis() : Date.now());
               const nowMs = Date.now();
               const diffSeconds = Math.floor((nowMs - lastActiveMs) / 1000);
               
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     batch.update(userRef, {
                       totalClicks: increment(earnedClicks),
                       balance: increment(earnedClicks),
-                      lastActive: serverTimestamp()
+                      lastActive: Date.now()
                     });
                     
                     const stateRef = doc(db, 'states', data.state);
@@ -140,8 +141,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      setAuthError(null);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      console.error("Sign-in error:", error);
+      if (error.message?.includes('missing initial state') || error.message?.includes('sessionStorage') || error.code === 'auth/web-storage-unsupported') {
+        setAuthError("Sign-in failed because your browser is blocking third-party storage (common in Incognito mode, Safari, or Brave). To sign in, please click the 'Open App in New Tab' button in the top right of the AI Studio preview, or enable third-party cookies.");
+      } else if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+        setAuthError(`Sign-in failed: ${error.message}`);
+      }
+    }
   };
 
   const logOut = async () => {
@@ -168,13 +179,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       await setDoc(userRef, {
         ...newProfile,
-        lastActive: serverTimestamp(),
-        createdAt: serverTimestamp()
+        lastActive: Date.now(),
+        createdAt: Date.now()
       });
       setProfile(newProfile);
     } else {
       // Update existing
-      await setDoc(userRef, { ...data, lastActive: serverTimestamp() }, { merge: true });
+      await setDoc(userRef, { ...data, lastActive: Date.now() }, { merge: true });
       setProfile({ ...profile, ...data });
     }
   };
@@ -182,6 +193,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{ user, profile, loading, signIn, logOut, updateProfile }}>
       {children}
+      
+      {/* Auth Error Modal */}
+      {authError && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border-4 border-red-500 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 mb-4 text-red-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <h3 className="text-xl font-display">Authentication Error</h3>
+            </div>
+            <p className="text-slate-700 mb-6 leading-relaxed font-medium">{authError}</p>
+            <button 
+              onClick={() => setAuthError(null)}
+              className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors shadow-md hover:shadow-lg active:translate-y-0.5"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Offline Earnings Toast */}
       {offlineEarnings !== null && offlineEarnings > 0 && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-xl shadow-2xl border-2 border-white z-50 animate-in slide-in-from-bottom-5 fade-in duration-500 font-nunito font-bold">
           <div className="flex items-center gap-3">

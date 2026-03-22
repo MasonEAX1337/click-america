@@ -106,8 +106,8 @@ service cloud.firestore {
              request.resource.data.balance is number && request.resource.data.balance >= 0 &&
              request.resource.data.clicksPerSecond is number && request.resource.data.clicksPerSecond >= 0 &&
              request.resource.data.clickPower is number && request.resource.data.clickPower >= 1 &&
-             (!('lastActive' in request.resource.data) || request.resource.data.lastActive is timestamp) &&
-             (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp) &&
+             (!('lastActive' in request.resource.data) || request.resource.data.lastActive is timestamp || request.resource.data.lastActive is number) &&
+             (!('createdAt' in request.resource.data) || request.resource.data.createdAt is timestamp || request.resource.data.createdAt is number) &&
              (!('achievements' in request.resource.data) || request.resource.data.achievements is list) &&
              (!('participatedEvents' in request.resource.data) || request.resource.data.participatedEvents is list) &&
              (!('eventsParticipated' in request.resource.data) || request.resource.data.eventsParticipated is number);
@@ -115,21 +115,21 @@ service cloud.firestore {
 
     function isValidStateUpdate() {
       // Allow only totalClicks and name to be updated
-      // ANTI-CHEAT: Limit max increment per request to 100,000 to prevent massive botting
+      // ANTI-CHEAT: Limit max increment per request to 100,000,000 to prevent massive botting
       let incrementAmount = request.resource.data.totalClicks - (('totalClicks' in resource.data) ? resource.data.totalClicks : 0);
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClicks', 'name']) &&
              request.resource.data.totalClicks is number &&
              incrementAmount >= 0 &&
-             incrementAmount <= 100000 &&
+             incrementAmount <= 100000000 &&
              (!('name' in request.resource.data.diff(resource.data).affectedKeys()) || (!('name' in resource.data) || request.resource.data.name == resource.data.name));
     }
 
     function isValidGlobalStatsUpdate() {
       // Allow only totalClicks and currentEvent to be updated
-      // ANTI-CHEAT: Limit max increment per request to 100,000
+      // ANTI-CHEAT: Limit max increment per request to 100,000,000
       let incrementAmount = ('totalClicks' in request.resource.data ? request.resource.data.totalClicks : 0) - (('totalClicks' in resource.data) ? resource.data.totalClicks : 0);
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalClicks', 'currentEvent']) &&
-             (!('totalClicks' in request.resource.data) || (request.resource.data.totalClicks is number && incrementAmount >= 0 && incrementAmount <= 100000)) &&
+             (!('totalClicks' in request.resource.data) || (request.resource.data.totalClicks is number && incrementAmount >= 0 && incrementAmount <= 100000000)) &&
              (!('currentEvent' in request.resource.data) || request.resource.data.currentEvent == null || request.resource.data.currentEvent is map);
     }
 
@@ -150,7 +150,7 @@ service cloud.firestore {
              uidNotModified() &&
              areImmutableFieldsUnchanged(['createdAt']) &&
              clicksIncrement >= 0 &&
-             clicksIncrement <= 100000;
+             clicksIncrement <= 100000000;
     }
 
     // ===============================================================

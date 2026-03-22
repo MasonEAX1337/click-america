@@ -31,7 +31,7 @@ function MainApp() {
           className="max-w-md w-full bg-white border-8 border-red-600 rounded-3xl p-8 shadow-[0_0_40px_rgba(220,38,38,0.3)] text-center relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 w-full h-4 bg-red-600"></div>
-          <h1 className="text-5xl font-display text-blue-900 mb-4 tracking-wide drop-shadow-sm mt-4">CLICK AMERICA</h1>
+          <h1 className="text-4xl sm:text-5xl font-display text-blue-900 mb-4 tracking-wide drop-shadow-sm mt-4">CLICK AMERICA</h1>
           <p className="text-slate-600 mb-8 font-bold text-lg">The ultimate real-time national clicker battle. Join your state and dominate the leaderboard.</p>
           
           <button

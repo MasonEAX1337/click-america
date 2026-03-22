@@ -1,4 +1,4 @@
-import { doc, writeBatch, increment, serverTimestamp, getDoc, setDoc } from 'firebase/firestore';
+import { doc, writeBatch, increment, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 // Constants
@@ -59,7 +59,7 @@ class GameEngine {
       batch.update(userRef, {
         totalClicks: increment(clicksToSync),
         balance: increment(clicksToSync),
-        lastActive: serverTimestamp()
+        lastActive: Date.now()
       });
 
       // Update State
